@@ -1,5 +1,6 @@
 package com.variety.store.user_service.domain.entity;
 
+import com.variety.store.user_service.domain.dto.ResourceDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -9,6 +10,7 @@ import org.springframework.data.annotation.Id;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -20,24 +22,45 @@ public class Resource {
     @Column(name = "resource_id")
     private Long id;
 
-    private String url;
+    private String name;
+    private String pattern;     // 자원 경로(url)
     private String httpMethod;
     private String description;
     private int order;
+    private boolean isActive;
 
-    @OneToMany(mappedBy = "resource")
-    private Set<RoleResource> roleResources = new HashSet<>();
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ResourceRole> resourceRoles = new HashSet<>();
 
     @Builder
-    public Resource(String url, String httpMethod, String description, int order, Set<RoleResource> roleResources) {
-        this.url = url;
+    public Resource(Long id, String name, String pattern, String httpMethod, String description, int order, boolean isActive, Set<ResourceRole> resourceRoles) {
+        this.id = id;
+        this.name = name;
+        this.pattern = pattern;
         this.httpMethod = httpMethod;
         this.description = description;
         this.order = order;
-        this.roleResources = roleResources;
+        this.isActive = isActive;
+        this.resourceRoles = resourceRoles;
     }
 
-    public void addRole(Role role) {
-        roleResources.add(new RoleResource(role, this));
+    // Association convenience method
+    public void addResourceRole(ResourceRole resourceRole) {
+        resourceRoles.add(resourceRole);
+        resourceRole.setResource(this);
+    }
+
+    public Set<Role> getRoleSet() {
+        return resourceRoles.stream()
+                .map(ResourceRole::getRole)
+                .collect(Collectors.toSet());
+    }
+
+    public void updateInfo(String name, String pattern, String httpMethod, String description, int order) {
+        this.name = name;
+        this.pattern = pattern;
+        this.httpMethod = httpMethod;
+        this.description = description;
+        this.order = order;
     }
 }

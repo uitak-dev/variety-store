@@ -1,6 +1,6 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.AddressDto;
+import com.variety.store.user_service.domain.dto.RoleDto;
 import com.variety.store.user_service.domain.dto.UserDto;
 import com.variety.store.user_service.domain.entity.Address;
 import com.variety.store.user_service.domain.entity.Role;
@@ -9,13 +9,12 @@ import com.variety.store.user_service.repository.RoleRepository;
 import com.variety.store.user_service.repository.UserRepository;
 import com.variety.store.user_service.security.KeycloakService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +27,11 @@ public class UserService {
 
     private final KeycloakService keycloakService;
 
-    // 사용자 생성.
+    public static final String DEFAULT_ROLE_NAME = "ROLE_USER";
+
+    /**
+     * 사용자 생성(회원 가입).
+     */
     public UserDto createUser(UserDto userDto) {
 
         if( userRepository.existsByEmail(userDto.getEmail()) ) {
@@ -41,51 +44,72 @@ public class UserService {
                 .email(userDto.getEmail())
                 .password(encodedPassword)
                 .name(userDto.getName())
-                .address(new Address(
-                        userDto.getAddress().getCity(),
-                        userDto.getAddress().getStreet(),
-                        userDto.getAddress().getZipcode()
-                ))
+                .phoneNumber(userDto.getPhoneNumber())
                 .build();
+
+        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
+                .orElseThrow(() -> new IllegalArgumentException("기본 권한이 생성되지 않았습니다."));
+
+        user.addRole(defaultRole);
+        userRepository.save(user);
 
         return convertToDto(user);
     }
 
-    // uuid로 사용자 조회.
-    public UserDto getUserById(Long userId) {
+    /**
+     * 특정 사용자 기본 정보 조회.
+     */
+    public UserDto getUserBasicInfo(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
         return convertToDto(user);
     }
 
-    // 이메일로 사용자 조회.
-    public UserDto getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+    /**
+     * 특정 사용자 권한 조회.
+     */
+    public Set<RoleDto> getUserRoles(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
-        return convertToDto(user);
+        return user.getUserRoles().stream()
+                .map(userRole -> new RoleDto(userRole.getRole().getId(), userRole.getRole().getName(), userRole.getRole().getDescription()))
+                .collect(Collectors.toSet());
     }
 
-    // 사용자 정보 수정.
+    /**
+     * 사용자 기본 정보 수정.
+     */
     public UserDto updateUser(Long userId, UserDto userDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
-        String updateName = userDto.getName();
         Address updateAddress = new Address(
                 userDto.getAddress().getCity(),
                 userDto.getAddress().getStreet(),
                 userDto.getAddress().getZipcode()
         );
 
-        user.updateUserInfo(updateName, updateAddress);
+        user.updateInfo(userDto.getName(), userDto.getPhoneNumber(), updateAddress);
 
-//        userRepository.save(user);
+        userRepository.save(user);
         return convertToDto(user);
     }
 
-    // 사용자 권한 추가.
+    /**
+     * 사용자 삭제(회원 탈퇴).
+     */
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        userRepository.save(user.delete());
+    }
+
+    /**
+     * 사용자 권한 추가.
+     */
     public void addRoleToUser(Long userId, Long roleId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
@@ -97,12 +121,26 @@ public class UserService {
         userRepository.save(user);
     }
 
+    /**
+     * 사용자 권한 제거.
+     */
+    public void removeRoleFromUser(Long userId, Long roleId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        user.getUserRoles().removeIf(userRole -> userRole.getRole().getId().equals(roleId));
+
+        userRepository.save(user);
+    }
+
     public UserDto convertToDto(User user) {
+
         return UserDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
-                .address(new AddressDto(
+                .phoneNumber(user.getPhoneNumber())
+                .address(new Address(
                         user.getAddress().getCity(),
                         user.getAddress().getStreet(),
                         user.getAddress().getZipcode()
@@ -111,10 +149,13 @@ public class UserService {
     }
 
     public User convertToEntity(UserDto userDto) {
+
         return User.builder()
                 .id(userDto.getId())
                 .email(userDto.getEmail())
+                .password(userDto.getPassword())
                 .name(userDto.getName())
+                .phoneNumber(userDto.getPhoneNumber())
                 .address(new Address(
                         userDto.getAddress().getCity(),
                         userDto.getAddress().getStreet(),

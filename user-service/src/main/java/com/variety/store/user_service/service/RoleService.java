@@ -62,7 +62,7 @@ public class RoleService {
         roleRepository.deleteById(roleId);
     }
 
-    private RoleDto convertToDto(Role role) {
+    public RoleDto convertToDto(Role role) {
         RoleDto roleDto = RoleDto.builder()
                 .id(role.getId())
                 .name(role.getName())
@@ -72,7 +72,7 @@ public class RoleService {
         return roleDto;
     }
 
-    private Role convertToEntity(RoleDto roleDto) {
+    public Role convertToEntity(RoleDto roleDto) {
         Role role = Role.builder()
                 .id(roleDto.getId())
                 .name(roleDto.getName())

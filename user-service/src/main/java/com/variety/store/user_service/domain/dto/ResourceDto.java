@@ -1,7 +1,5 @@
 package com.variety.store.user_service.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.variety.store.user_service.domain.entity.Address;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,16 +11,16 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserDto {
+public class ResourceDto {
 
     private Long id;
-    private String email;
-
-    @JsonIgnore
-    private String password;
 
     private String name;
-    private String phoneNumber;
-    private Address address;
+    private String pattern;     // 자원 경로(url)
+    private String httpMethod;
+    private String description;
+    private int order;
+    private boolean isActive;
+
     private Set<RoleDto> roles;
 }

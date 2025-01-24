@@ -22,34 +22,48 @@ public class User {
     private Long id;
 
     private String name;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @Column(nullable = false)
     private String password;
+
+    private String phoneNumber;
 
     @Embedded
     private Address address;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> userRoles = new HashSet<>();
+
+    private boolean isDeleted = false;
+
+    @Builder
+    public User(Long id, String name, String email, String password, String phoneNumber, Address address) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+    }
 
     // Association convenience method
     public void addRole(Role role) {
         userRoles.add(new UserRole(this, role));
     }
 
-    @Builder
-    public User(Long id, String name, String email, String password, Address address, Set<UserRole> userRoles) {
-        this.id = id;
+    public User updateInfo(String name, String phoneNumber, Address address) {
         this.name = name;
-        this.email = email;
-        this.password = password;
+        this.phoneNumber = phoneNumber;
         this.address = address;
-        this.userRoles = userRoles;
+
+        return this;
     }
 
-    public User updateUserInfo(String name, Address address) {
-        this.name = name;
-        this.address = address;
-
+    public User delete() {
+        isDeleted = true;
         return this;
     }
 }
