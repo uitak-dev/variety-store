@@ -20,14 +20,18 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
 
-    // 권한 생성.
+    /**
+     * 권한 생성.
+     */
     public RoleDto createRole(RoleDto roleDto) {
         Role role = convertToEntity(roleDto);
         roleRepository.save(role);
         return convertToDto(role);
     }
 
-    // 모든 권한 조회.
+    /**
+     * 모든 권한 조회.
+     */
     public List<RoleDto> getAllRoles() {
         List<Role> roles = roleRepository.findAll();
         return roles.stream().map(this::convertToDto).toList();
@@ -47,7 +51,9 @@ public class RoleService {
         return convertToDto(role);
     }
 
-    // 권한 수정.
+    /**
+     * 권한 수정.
+     */
     public RoleDto updateRole(Long roleId, RoleDto roleDto) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("role not found with roleId:" + roleId));
@@ -57,7 +63,9 @@ public class RoleService {
         return convertToDto(updatedRole);
     }
 
-    // 권한 삭제.
+    /**
+     * 권한 삭제.
+     */
     public void deleteRole(Long roleId) {
         roleRepository.deleteById(roleId);
     }

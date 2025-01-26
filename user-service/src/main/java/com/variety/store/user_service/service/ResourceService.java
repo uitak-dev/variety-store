@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -110,7 +112,9 @@ public class ResourceService {
 
     public Resource convertToEntity(ResourceDto resourceDto) {
 
-        Set<ResourceRole> resourceRoles = resourceDto.getRoles().stream()
+        Set<ResourceRole> resourceRoles = Optional.ofNullable(resourceDto.getRoles())
+                .orElse(Collections.emptySet())
+                .stream()
                 .map(roleDto -> {
                     Role role = roleRepository.findById(roleDto.getId())
                             .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleDto.getId()));
@@ -124,14 +128,12 @@ public class ResourceService {
                 .httpMethod(resourceDto.getHttpMethod())
                 .description(resourceDto.getDescription())
                 .order(resourceDto.getOrder())
-                .isActive(resourceDto.isActive())
                 .resourceRoles(resourceRoles)
                 .build();
 
         // ResourceRole 객체에 리소스를 설정
         resourceRoles.forEach(resourceRole -> resourceRole.setResource(resource));
         return resource;
-
     }
 
     public ResourceDto convertToDto(Resource resource) {
@@ -143,8 +145,9 @@ public class ResourceService {
                 .httpMethod(resource.getHttpMethod())
                 .description(resource.getDescription())
                 .order(resource.getOrder())
-                .isActive(resource.isActive())
-                .roles(resource.getResourceRoles().stream()
+                .roles(Optional.ofNullable(resource.getResourceRoles())
+                        .orElse(Collections.emptySet())
+                        .stream()
                         .map(resourceRole ->
                                 RoleMapper.convertToDto(resourceRole.getRole())
                         )

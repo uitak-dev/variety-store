@@ -1,12 +1,10 @@
 package com.variety.store.user_service.domain.entity;
 
-import com.variety.store.user_service.domain.dto.ResourceDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,24 +21,27 @@ public class Resource {
     private Long id;
 
     private String name;
-    private String pattern;     // 자원 경로(url)
+
+    @Column(nullable = false, unique = true)
+    private String pattern;  // 자원 경로(url)
+
     private String httpMethod;
     private String description;
-    private int order;
-    private boolean isActive;
 
-    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "resource_order")
+    private int order;
+
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ResourceRole> resourceRoles = new HashSet<>();
 
     @Builder
-    public Resource(Long id, String name, String pattern, String httpMethod, String description, int order, boolean isActive, Set<ResourceRole> resourceRoles) {
+    public Resource(Long id, String name, String pattern, String httpMethod, String description, int order, Set<ResourceRole> resourceRoles) {
         this.id = id;
         this.name = name;
         this.pattern = pattern;
         this.httpMethod = httpMethod;
         this.description = description;
         this.order = order;
-        this.isActive = isActive;
         this.resourceRoles = resourceRoles;
     }
 

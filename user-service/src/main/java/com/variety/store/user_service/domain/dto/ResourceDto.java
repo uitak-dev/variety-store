@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -20,7 +21,6 @@ public class ResourceDto {
     private String httpMethod;
     private String description;
     private int order;
-    private boolean isActive;
 
     private Set<RoleDto> roles;
 }

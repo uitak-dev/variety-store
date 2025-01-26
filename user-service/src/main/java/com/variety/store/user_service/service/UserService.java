@@ -1,5 +1,6 @@
 package com.variety.store.user_service.service;
 
+import com.variety.store.user_service.domain.dto.AddressDto;
 import com.variety.store.user_service.domain.dto.RoleDto;
 import com.variety.store.user_service.domain.dto.UserDto;
 import com.variety.store.user_service.domain.entity.Address;
@@ -8,17 +9,20 @@ import com.variety.store.user_service.domain.entity.User;
 import com.variety.store.user_service.repository.RoleRepository;
 import com.variety.store.user_service.repository.UserRepository;
 import com.variety.store.user_service.security.KeycloakService;
+import com.variety.store.user_service.utility.mapper.AddressMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
@@ -48,7 +52,13 @@ public class UserService {
                 .build();
 
         Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
-                .orElseThrow(() -> new IllegalArgumentException("기본 권한이 생성되지 않았습니다."));
+                .orElseGet(() -> {
+                    Role newRole = Role.builder()
+                            .name(DEFAULT_ROLE_NAME)
+                            .description("사용자 기본 권한")
+                            .build();
+                    return roleRepository.save(newRole);
+                });
 
         user.addRole(defaultRole);
         userRepository.save(user);
@@ -85,13 +95,9 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
-        Address updateAddress = new Address(
-                userDto.getAddress().getCity(),
-                userDto.getAddress().getStreet(),
-                userDto.getAddress().getZipcode()
-        );
+        User updateUser = convertToEntity(userDto);
 
-        user.updateInfo(userDto.getName(), userDto.getPhoneNumber(), updateAddress);
+        user.updateInfo(updateUser.getName(), updateUser.getPhoneNumber(), updateUser.getAddress());
 
         userRepository.save(user);
         return convertToDto(user);
@@ -140,11 +146,7 @@ public class UserService {
                 .email(user.getEmail())
                 .name(user.getName())
                 .phoneNumber(user.getPhoneNumber())
-                .address(new Address(
-                        user.getAddress().getCity(),
-                        user.getAddress().getStreet(),
-                        user.getAddress().getZipcode()
-                ))
+                .address(AddressMapper.convertToDto(user.getAddress()))
                 .build();
     }
 
@@ -156,11 +158,7 @@ public class UserService {
                 .password(userDto.getPassword())
                 .name(userDto.getName())
                 .phoneNumber(userDto.getPhoneNumber())
-                .address(new Address(
-                        userDto.getAddress().getCity(),
-                        userDto.getAddress().getStreet(),
-                        userDto.getAddress().getZipcode()
-                ))
+                .address(AddressMapper.convertToEntity(userDto.getAddress()))
                 .build();
     }
 }

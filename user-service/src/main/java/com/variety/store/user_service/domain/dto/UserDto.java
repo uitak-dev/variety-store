@@ -23,6 +23,7 @@ public class UserDto {
 
     private String name;
     private String phoneNumber;
-    private Address address;
+    private AddressDto address;
+
     private Set<RoleDto> roles;
 }

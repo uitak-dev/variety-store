@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +28,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(unique = true)
     private String phoneNumber;
 
     @Embedded
