@@ -1,4 +1,6 @@
 # variety-store
+전자상거래 플랫폼
+
 
 ## 구현 기능
 - SSO(Single Sign On)
@@ -9,3 +11,8 @@
 - Keycloak Authorization Server
 - Spring Data JPA
 - Querydsl
+
+## 테스트
+- mockito
+- junit
+- assertj
