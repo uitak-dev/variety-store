@@ -1,35 +1,50 @@
-package com.variety.store.user_service.security;
+package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.repository.RoleRepository;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KeycloakService {
 
-    private final WebClient keycloakWebClient;
+    private final WebClient webClient;
+
+    public KeycloakService(@Qualifier("keycloakWebClient") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     // 사용자 생성
-    public Mono<Void> createUser(String id, String username, String email, String password) {
+    public Mono<Void> createUser(Long id, String username, String email, String password) {
 
-        return keycloakWebClient.post()
+        UserRepresentation userRepresentation = new UserRepresentation(id.toString(), username, email, password);
+        log.info("Keycloak 사용자 등록 요청 JSON: {}", userRepresentation);
+
+        return webClient.post()
                 .uri("/users")
-                .bodyValue(new UserRepresentation(id, username, email, password))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(userRepresentation)
                 .retrieve()
-                .bodyToMono(Void.class);
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    log.error("Keycloak 사용자 등록 실패: {} - {}", response.statusCode(), errorBody);
+                                    return Mono.error(new RuntimeException("Keycloak 사용자 등록 실패: " + errorBody));
+                                })
+                )
+                .bodyToMono(Void.class)
+                .doOnSuccess(v -> log.info("Keycloak 사용자 등록 성공: {}", email))
+                .doOnError(e -> log.error("Keycloak 사용자 등록 중 오류 발생: {}", e.getMessage()));
     }
 
     // 사용자 정보 수정
@@ -38,7 +53,7 @@ public class KeycloakService {
             return Mono.error(new IllegalArgumentException("수정할 필드가 제공되지 않았습니다."));
         }
 
-        return keycloakWebClient.put()
+        return webClient.put()
                 .uri("/users/{userId}", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updatedFields)
@@ -52,7 +67,7 @@ public class KeycloakService {
     public Mono<Void> deleteUser(String email) {
 
         return getUserIdByEmail(email)
-                .flatMap(userId -> keycloakWebClient.delete()
+                .flatMap(userId -> webClient.delete()
                         .uri("/users/{userId}", userId)
                         .retrieve()
                         .bodyToMono(Void.class)
@@ -62,11 +77,11 @@ public class KeycloakService {
     }
 
     // 권한 생성
-    public Mono<Void> createRole(String id, String roleName, String description) {
+    public Mono<Void> createRole(Long id, String roleName, String description) {
 
-        return keycloakWebClient.post()
+        return webClient.post()
                 .uri("/roles")
-                .bodyValue(new RoleRepresentation(id, roleName, description))
+                .bodyValue(new RoleRepresentation(id.toString(), roleName, description))
                 .retrieve()
                 .bodyToMono(Void.class);
     }
@@ -77,7 +92,7 @@ public class KeycloakService {
             return Mono.error(new IllegalArgumentException("수정할 필드가 제공되지 않았습니다."));
         }
 
-        return keycloakWebClient.put()
+        return webClient.put()
                 .uri("/roles/{roleName}", roleName)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updatedFields)
@@ -89,7 +104,7 @@ public class KeycloakService {
 
     // 권한 삭제
     public Mono<Void> deleteRole(String roleName) {
-        return keycloakWebClient.delete()
+        return webClient.delete()
                 .uri("/roles/{roleName}", roleName)
                 .retrieve()
                 .bodyToMono(Void.class);
@@ -97,11 +112,11 @@ public class KeycloakService {
 
     // 사용자 특정 권한(Role) 추가.
     public Mono<Void> addRoleToUser(String userId, String roleName) {
-        return keycloakWebClient.get()
+        return webClient.get()
                 .uri("/roles/{roleName}", roleName)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .flatMap(newRole -> keycloakWebClient.get()
+                .flatMap(newRole -> webClient.get()
                         .uri("/users/{userId}/role-mappings/realm", userId)
                         .retrieve()
                         .bodyToMono(List.class)
@@ -123,7 +138,7 @@ public class KeycloakService {
                             ));
 
                             // 업데이트된 역할을 Keycloak에 적용 (POST)
-                            return keycloakWebClient.post()
+                            return webClient.post()
                                     .uri(uriBuilder -> uriBuilder
                                             .path("/users/{userId}/role-mappings/realm")
                                             .build(userId))
@@ -137,12 +152,12 @@ public class KeycloakService {
 
     // 사용자 특정 권한(Role) 제거.
     public Mono<Void> removeRoleFromUser(String userId, String roleName) {
-        return keycloakWebClient.get()
+        return webClient.get()
                 .uri("/roles/{roleName}", roleName)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .flatMap(roleToRemove ->
-                        keycloakWebClient.get()
+                        webClient.get()
                                 .uri("/users/{userId}/role-mappings/realm", userId)
                                 .retrieve()
                                 .bodyToMono(List.class)
@@ -158,7 +173,7 @@ public class KeycloakService {
                                     }
 
                                     // 업데이트된 역할 목록을 POST 요청으로 Keycloak에 적용
-                                    return keycloakWebClient.post()
+                                    return webClient.post()
                                             .uri("/users/{userId}/role-mappings/realm", userId)
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .bodyValue(updatedRoles)
@@ -175,7 +190,7 @@ public class KeycloakService {
         }
 
         return Flux.fromIterable(roleNames)
-                .flatMap(roleName -> keycloakWebClient.get()
+                .flatMap(roleName -> webClient.get()
                         .uri("/roles/{roleName}", roleName)
                         .retrieve()
                         .bodyToMono(Map.class)
@@ -191,7 +206,7 @@ public class KeycloakService {
                     }
 
                     // 사용자 역할 업데이트 요청 (기존 역할은 무시하고, 새로운 역할 목록 적용)
-                    return keycloakWebClient.post()
+                    return webClient.post()
                             .uri("/users/{userId}/role-mappings/realm", userId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(roleList)
@@ -208,7 +223,7 @@ public class KeycloakService {
 
     // 사용자 email로, keycloak에 등록된 사용자의 uuid 조회.
     public Mono<String> getUserIdByEmail(String email) {
-        return keycloakWebClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/users")
                         .queryParam("email", email)
@@ -224,21 +239,23 @@ public class KeycloakService {
                 });
     }
 
-    static class UserRepresentation {
+    @Data
+    public static class UserRepresentation {
 
         private final String id;
         private final String username;
         private final String email;
         private final boolean enabled = true;
-        private final Credentials credentials;
+        private final List<Credentials> credentials;
 
         public UserRepresentation(String id, String username, String email, String password) {
             this.id = id;
             this.username = username;
             this.email = email;
-            this.credentials = new Credentials(password);
+            this.credentials = Collections.singletonList(new Credentials(password));
         }
 
+        @Data
         public static class Credentials {
             private final String type = "password";
             private final String value;
@@ -250,7 +267,8 @@ public class KeycloakService {
         }
     }
 
-    static class RoleRepresentation {
+    @Data
+    public static class RoleRepresentation {
         private final String id;
         private final String name;
         private final String description;

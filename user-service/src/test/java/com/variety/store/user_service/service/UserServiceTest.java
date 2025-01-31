@@ -1,10 +1,9 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.AddressDto;
-import com.variety.store.user_service.domain.dto.UserDto;
+import com.variety.store.user_service.domain.dto.request.AddressDto;
+import com.variety.store.user_service.domain.dto.request.UserDto;
 import com.variety.store.user_service.domain.entity.User;
 import com.variety.store.user_service.repository.UserRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,9 +33,11 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userDto = UserDto.builder()
-                .name("Jeong Ui Tak")
-                .email("Jeong@example.com")
+                .username("wjd1735")
                 .password("rawPassword123")
+                .firstName("의탁")
+                .lastName("정")
+                .email("Jeong@example.com")
                 .phoneNumber("010-1234-5678")
                 .build();
     }
@@ -71,7 +72,7 @@ class UserServiceTest {
             userService.createUser(userDto);
         });
 
-        assertThat(exception.getMessage()).isEqualTo("이미 사용 중인 이메일입니다.");
+        assertThat(exception.getMessage()).isEqualTo("이미 사용 중인 이메일 입니다.");
     }
 
     /**
@@ -85,8 +86,9 @@ class UserServiceTest {
         AddressDto updateAddressDto = new AddressDto("seoul", "아리수로", "123");
         UserDto updateUserDto = UserDto.builder()
                 .id(savedUser.getId())
-                .name("Updated Name")
-                .phoneNumber("010-8765-4321")
+                .firstName("약용")
+                .lastName("정")
+                .phoneNumber("010-1234-5678")
                 .address(updateAddressDto)
                 .build();
 
@@ -94,11 +96,11 @@ class UserServiceTest {
 
         assertNotNull(updatedUserDto);
         assertThat(updatedUserDto)
-                .extracting(UserDto::getName, UserDto::getPhoneNumber,
+                .extracting(UserDto::getFirstName, UserDto::getLastName, UserDto::getPhoneNumber,
                         user -> user.getAddress().getCity(),
                         user -> user.getAddress().getStreet(),
                         user -> user.getAddress().getZipcode())
-                .containsExactly(updateUserDto.getName(), updateUserDto.getPhoneNumber(),
+                .containsExactly(updateUserDto.getFirstName(), updatedUserDto.getLastName(), updateUserDto.getPhoneNumber(),
                         updateAddressDto.getCity(),
                         updateAddressDto.getStreet(),
                         updateAddressDto.getZipcode());

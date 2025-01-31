@@ -1,6 +1,6 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.RoleDto;
+import com.variety.store.user_service.domain.dto.request.RoleDto;
 import com.variety.store.user_service.domain.entity.Role;
 import com.variety.store.user_service.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -20,12 +18,18 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
 
+    private final KeycloakService keycloakService;
+
     /**
      * 권한 생성.
      */
     public RoleDto createRole(RoleDto roleDto) {
         Role role = convertToEntity(roleDto);
         roleRepository.save(role);
+
+        // keycloak 에 권한 추가.
+        keycloakService.createRole(role.getId(), role.getName(), role.getDescription());
+
         return convertToDto(role);
     }
 

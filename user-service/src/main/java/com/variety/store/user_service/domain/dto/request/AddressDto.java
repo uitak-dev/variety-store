@@ -1,4 +1,4 @@
-package com.variety.store.user_service.domain.dto;
+package com.variety.store.user_service.domain.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

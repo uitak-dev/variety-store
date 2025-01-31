@@ -26,28 +26,30 @@ spring:
           keycloak-user-login-client:                                       # oidc-client
             provider: keycloak                                              # required
             client-id: account                                              # required
-            client-secret: W3MXVvOE505ozUZBaIzVFsjbR6HabUMJ                 # required
+            client-secret: raKQNRhyuR5BuK3wiQNS0UUsrcbto8Wk                 # required
             redirectUri: http://localhost:8000/login/oauth2/code/keycloak   # required
             authorization-grant-type: authorization_code
             scope: openid, profile, email, roles
+
           keycloak-admin-api-client:
             provider: keycloak
             client-id: admin-cli
-            client-secret: IR0rcRrErPSoitJlwUN4dFRIeEJoAxGF
+            client-secret: ektlyf6jOpXSJv8uAKXcFpLpye5Ulecq
             authorization-grant-type: client_credentials
 
         provider:                                                           # provider setting
           keycloak:                                                         # oidc-provider
-            issuer-uri: http://0.0.0.0:8080/realms/variety-store            # required
-            user-name-attribute: preferred_username
+            issuer-uri: http://localhost:8080/realms/variety-store          # required
+#            user-name-attribute: preferred_username
 
       resourceserver:
         jwt:
-          issuer-uri: http://0.0.0.0:8080/realms/variety-store
+          issuer-uri: http://localhost:8080/realms/variety-store
 
 logging.level:
-  org.hibernate.SQL: debug
-  org.hibernate.orm.jdbc.bind: trace
+  root: INFO
+#  org.hibernate.SQL: debug
+#  org.hibernate.orm.jdbc.bind: trace
 
 eureka:
   instance:

@@ -1,6 +1,6 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.ResourceDto;
+import com.variety.store.user_service.domain.dto.request.ResourceDto;
 import com.variety.store.user_service.domain.entity.Resource;
 import com.variety.store.user_service.domain.entity.ResourceRole;
 import com.variety.store.user_service.domain.entity.Role;
@@ -69,7 +69,7 @@ public class ResourceService {
                 resourceDto.getPattern(),
                 resourceDto.getHttpMethod(),
                 resourceDto.getDescription(),
-                resourceDto.getOrder()
+                resourceDto.getPriority()
         );
 
         // 업데이트할 권한 목록.
@@ -127,7 +127,7 @@ public class ResourceService {
                 .pattern(resourceDto.getPattern())
                 .httpMethod(resourceDto.getHttpMethod())
                 .description(resourceDto.getDescription())
-                .order(resourceDto.getOrder())
+                .priority(resourceDto.getPriority())
                 .resourceRoles(resourceRoles)
                 .build();
 
@@ -144,7 +144,7 @@ public class ResourceService {
                 .pattern(resource.getPattern())
                 .httpMethod(resource.getHttpMethod())
                 .description(resource.getDescription())
-                .order(resource.getOrder())
+                .priority(resource.getPriority())
                 .roles(Optional.ofNullable(resource.getResourceRoles())
                         .orElse(Collections.emptySet())
                         .stream()

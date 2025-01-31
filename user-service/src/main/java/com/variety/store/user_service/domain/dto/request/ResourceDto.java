@@ -1,11 +1,10 @@
-package com.variety.store.user_service.domain.dto;
+package com.variety.store.user_service.domain.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -20,7 +19,7 @@ public class ResourceDto {
     private String pattern;     // 자원 경로(url)
     private String httpMethod;
     private String description;
-    private int order;
+    private Long priority;
 
     private Set<RoleDto> roles;
 }

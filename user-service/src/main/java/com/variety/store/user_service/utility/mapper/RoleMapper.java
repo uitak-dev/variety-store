@@ -1,6 +1,6 @@
 package com.variety.store.user_service.utility.mapper;
 
-import com.variety.store.user_service.domain.dto.RoleDto;
+import com.variety.store.user_service.domain.dto.request.RoleDto;
 import com.variety.store.user_service.domain.entity.Role;
 
 public class RoleMapper {

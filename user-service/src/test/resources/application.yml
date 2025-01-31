@@ -26,24 +26,25 @@ spring:
           keycloak-user-login-client:
             provider: keycloak
             client-id: account
-            client-secret: 3qMd82SEI293dKD2UM3EQt71xZrKTcpo
+            client-secret: raKQNRhyuR5BuK3wiQNS0UUsrcbto8Wk
             redirectUri: http://localhost:8000/login/oauth2/code/keycloak
             authorization-grant-type: authorization_code
             scope: openid, profile, email, roles
+
           keycloak-admin-api-client:
             provider: keycloak
             client-id: admin-cli
-            client-secret: Lgyya9rG5utAUZiqc7drVLm6Nzbg4oeh
+            client-secret: ektlyf6jOpXSJv8uAKXcFpLpye5Ulecq
             authorization-grant-type: client_credentials
 
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/variety-store-test
+            issuer-uri: http://localhost:8080/realms/variety-store
             user-name-attribute: preferred_username
 
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/variety-store-test
+          issuer-uri: http://localhost:8080/realms/variety-store
 
 logging:
   level:

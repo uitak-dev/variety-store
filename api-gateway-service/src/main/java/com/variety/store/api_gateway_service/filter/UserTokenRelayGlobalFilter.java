@@ -25,6 +25,7 @@ public class UserTokenRelayGlobalFilter implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
         return exchange.getPrincipal().flatMap(principal -> {
             if (principal instanceof OAuth2AuthenticationToken authenticationToken) {
                 // Load Authorized Client
@@ -33,31 +34,23 @@ public class UserTokenRelayGlobalFilter implements GlobalFilter {
                                 authenticationToken,
                                 exchange
                         )
-                        .flatMap(authorizedClient -> {
-                            // Continue without token
-                            if (authorizedClient == null || authorizedClient.getAccessToken() == null) {
-                                // log.warn("Authorized client or access token is null");
-                                return chain.filter(exchange);
-                            }
-
-                            // Add Authorization header with Bearer token
-                            String accessToken = authorizedClient.getAccessToken().getTokenValue();
+                        .map(OAuth2AuthorizedClient::getAccessToken)
+                        .map(accessToken -> {
+                            // 요청 헤더에 Bearer Token 추가
                             ServerWebExchange mutatedExchange = exchange.mutate()
                                     .request(exchange.getRequest()
                                             .mutate()
-                                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                                            .header(HttpHeaders.AUTHORIZATION,
+                                                    "Bearer " + accessToken.getTokenValue())
                                             .build()
                                     )
                                     .build();
-
-                            // log.info("Added Bearer token to Authorization header");
-                            return chain.filter(mutatedExchange);
-                        });
+                            return mutatedExchange;
+                        })
+                        .flatMap(chain::filter);
             }
-
             // Continue if principal is not OAuth2AuthenticationToken
             return chain.filter(exchange);
-        });
+        }).switchIfEmpty(chain.filter(exchange));
     }
-
 }

@@ -41,7 +41,7 @@ public class KeycloakWebClientConfig {
 
         return WebClient.builder()
                 .filter(oauth2)
-                .baseUrl("http://0.0.0.0:8080/admin/realms/variety-store")
+                .baseUrl("http://localhost:8080/admin/realms/variety-store")
                 .build();
     }
 }

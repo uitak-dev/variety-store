@@ -1,6 +1,6 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.ResourceDto;
+import com.variety.store.user_service.domain.dto.request.ResourceDto;
 import com.variety.store.user_service.domain.entity.Resource;
 import com.variety.store.user_service.repository.ResourceRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +35,7 @@ class ResourceServiceTest {
                 .pattern("/api/test/**")
                 .httpMethod("GET")
                 .description("Test resource description")
-                .order(1)
+                .priority(1L)
                 .build();
 
         resourceDto = ResourceDto.builder()
@@ -43,7 +43,7 @@ class ResourceServiceTest {
                 .pattern("/api/test/**")
                 .httpMethod("GET")
                 .description("Test resource description")
-                .order(1)
+                .priority(1L)
                 .build();
     }
 

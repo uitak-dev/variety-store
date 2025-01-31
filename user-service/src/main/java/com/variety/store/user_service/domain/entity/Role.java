@@ -1,5 +1,6 @@
 package com.variety.store.user_service.domain.entity;
 
+import com.variety.store.user_service.domain.entity.base.TrackingEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Role {
+public class Role extends TrackingEntity {
 
     @Id
     @GeneratedValue

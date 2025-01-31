@@ -1,5 +1,6 @@
 package com.variety.store.user_service.domain.entity;
 
+import com.variety.store.user_service.domain.entity.base.TrackingEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Resource {
+public class Resource extends TrackingEntity {
 
     @Id
     @GeneratedValue
@@ -27,21 +28,19 @@ public class Resource {
 
     private String httpMethod;
     private String description;
-
-    @Column(name = "resource_order")
-    private int order;
+    private Long priority;
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ResourceRole> resourceRoles = new HashSet<>();
 
     @Builder
-    public Resource(Long id, String name, String pattern, String httpMethod, String description, int order, Set<ResourceRole> resourceRoles) {
+    public Resource(Long id, String name, String pattern, String httpMethod, String description, Long priority, Set<ResourceRole> resourceRoles) {
         this.id = id;
         this.name = name;
         this.pattern = pattern;
         this.httpMethod = httpMethod;
         this.description = description;
-        this.order = order;
+        this.priority = priority;
         this.resourceRoles = resourceRoles;
     }
 
@@ -57,11 +56,11 @@ public class Resource {
                 .collect(Collectors.toSet());
     }
 
-    public void updateInfo(String name, String pattern, String httpMethod, String description, int order) {
+    public void updateInfo(String name, String pattern, String httpMethod, String description, Long priority) {
         this.name = name;
         this.pattern = pattern;
         this.httpMethod = httpMethod;
         this.description = description;
-        this.order = order;
+        this.priority = priority;
     }
 }

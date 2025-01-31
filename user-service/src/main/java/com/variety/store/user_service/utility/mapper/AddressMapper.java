@@ -1,7 +1,7 @@
 package com.variety.store.user_service.utility.mapper;
 
-import com.variety.store.user_service.domain.dto.AddressDto;
-import com.variety.store.user_service.domain.entity.Address;
+import com.variety.store.user_service.domain.dto.request.AddressDto;
+import com.variety.store.user_service.domain.entity.value.Address;
 
 public class AddressMapper {
 

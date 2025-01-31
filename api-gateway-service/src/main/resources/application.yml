@@ -9,6 +9,9 @@ eureka:
       defaultZone: http://127.0.0.1:8761/eureka
 
 spring:
+  application:
+    name: api-gateway-service
+
   security:
     oauth2:
       client:
@@ -16,7 +19,7 @@ spring:
           keycloak:                                                         # oidc-client
             provider: keycloak
             client-id: account
-            client-secret: W3MXVvOE505ozUZBaIzVFsjbR6HabUMJ
+            client-secret: p1ptVEsG0iQZ5ofNFojaLoTzVFjkSk2y
             redirectUri: http://localhost:8000/login/oauth2/code/keycloak
             authorization-grant-type: authorization_code
             scope: openid, profile, email, roles
@@ -28,3 +31,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://0.0.0.0:8080/realms/variety-store
+
+logging:
+  level:
+    root: INFO

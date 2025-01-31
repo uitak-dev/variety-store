@@ -1,4 +1,4 @@
-package com.variety.store.user_service.domain.entity;
+package com.variety.store.user_service.domain.entity.value;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;

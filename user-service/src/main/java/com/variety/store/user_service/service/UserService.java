@@ -1,35 +1,35 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.AddressDto;
-import com.variety.store.user_service.domain.dto.RoleDto;
-import com.variety.store.user_service.domain.dto.UserDto;
-import com.variety.store.user_service.domain.entity.Address;
+import com.variety.store.user_service.domain.dto.request.RoleDto;
+import com.variety.store.user_service.domain.dto.request.UserDto;
 import com.variety.store.user_service.domain.entity.Role;
 import com.variety.store.user_service.domain.entity.User;
 import com.variety.store.user_service.repository.RoleRepository;
 import com.variety.store.user_service.repository.UserRepository;
-import com.variety.store.user_service.security.KeycloakService;
 import com.variety.store.user_service.utility.mapper.AddressMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.ReactiveTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionalOperator;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-
-    private final KeycloakService keycloakService;
 
     public static final String DEFAULT_ROLE_NAME = "ROLE_USER";
 
@@ -38,23 +38,19 @@ public class UserService {
      */
     public UserDto createUser(UserDto userDto) {
 
-        if( userRepository.existsByEmail(userDto.getEmail()) ) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
         }
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
+        userDto.setPassword(encodedPassword);
 
-        User user = User.builder()
-                .email(userDto.getEmail())
-                .password(encodedPassword)
-                .name(userDto.getName())
-                .phoneNumber(userDto.getPhoneNumber())
-                .build();
+        User user = convertToEntity(userDto);
 
-        Role defaultRole = roleRepository.findByName(DEFAULT_ROLE_NAME)
+        Role defaultRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> {
                     Role newRole = Role.builder()
-                            .name(DEFAULT_ROLE_NAME)
+                            .name("ROLE_USER")
                             .description("사용자 기본 권한")
                             .build();
                     return roleRepository.save(newRole);
@@ -62,6 +58,8 @@ public class UserService {
 
         user.addRole(defaultRole);
         userRepository.save(user);
+
+        log.info("사용자 DB 저장 완료: {}", user.getEmail());
 
         return convertToDto(user);
     }
@@ -97,7 +95,8 @@ public class UserService {
 
         User updateUser = convertToEntity(userDto);
 
-        user.updateInfo(updateUser.getName(), updateUser.getPhoneNumber(), updateUser.getAddress());
+        user.updateInfo(updateUser.getFirstName(), updateUser.getLastName(),
+                updateUser.getPhoneNumber(), updateUser.getAddress());
 
         userRepository.save(user);
         return convertToDto(user);
@@ -143,8 +142,10 @@ public class UserService {
 
         return UserDto.builder()
                 .id(user.getId())
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .email(user.getEmail())
-                .name(user.getName())
                 .phoneNumber(user.getPhoneNumber())
                 .address(AddressMapper.convertToDto(user.getAddress()))
                 .build();
@@ -154,9 +155,11 @@ public class UserService {
 
         return User.builder()
                 .id(userDto.getId())
+                .username(userDto.getUsername())
+                .firstName(userDto.getFirstName())
+                .lastName(userDto.getLastName())
                 .email(userDto.getEmail())
                 .password(userDto.getPassword())
-                .name(userDto.getName())
                 .phoneNumber(userDto.getPhoneNumber())
                 .address(AddressMapper.convertToEntity(userDto.getAddress()))
                 .build();
