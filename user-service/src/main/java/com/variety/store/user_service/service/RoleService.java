@@ -18,17 +18,12 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
 
-    private final KeycloakService keycloakService;
-
     /**
      * 권한 생성.
      */
     public RoleDto createRole(RoleDto roleDto) {
         Role role = convertToEntity(roleDto);
         roleRepository.save(role);
-
-        // keycloak 에 권한 추가.
-        keycloakService.createRole(role.getId(), role.getName(), role.getDescription());
 
         return convertToDto(role);
     }

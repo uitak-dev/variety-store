@@ -1,18 +1,19 @@
 package com.variety.store.user_service.service;
 
+import jakarta.annotation.Nullable;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,9 +26,9 @@ public class KeycloakService {
     }
 
     // 사용자 생성
-    public Mono<Void> createUser(Long id, String username, String email, String password) {
+    public Mono<Void> createUser(String username, String email, String password) {
 
-        UserRepresentation userRepresentation = new UserRepresentation(id.toString(), username, email, password);
+        UserRepresentation userRepresentation = new UserRepresentation(null, username, email, password);
         log.info("Keycloak 사용자 등록 요청 JSON: {}", userRepresentation);
 
         return webClient.post()
@@ -47,55 +48,97 @@ public class KeycloakService {
                 .doOnError(e -> log.error("Keycloak 사용자 등록 중 오류 발생: {}", e.getMessage()));
     }
 
+    // 사용자 아이디로, keycloak에 등록된 사용자 정보 조회.
+    public Mono<Optional<UserRepresentation>> getUserInfoByUsername(String username) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/users")
+                        .queryParam("username", username)
+                        .build())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .bodyToMono(UserRepresentation[].class)
+                .map(users -> {
+                    if (users.length > 0 && users[0].getId() != null) {
+                        return Optional.of(users[0]);
+                    }
+                    return Optional.empty();
+                });
+    }
+
     // 사용자 정보 수정
-    public Mono<Void> updateUser(String userId, Map<String, Object> updatedFields) {
-        if (updatedFields == null || updatedFields.isEmpty()) {
+    public Mono<Void> updateUser(String username, UserRepresentation userRepresentation) {
+        if (userRepresentation == null) {
             return Mono.error(new IllegalArgumentException("수정할 필드가 제공되지 않았습니다."));
         }
 
         return webClient.put()
-                .uri("/users/{userId}", userId)
+                .uri("/users/{username}", username)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(updatedFields)
+                .bodyValue(userRepresentation)
                 .retrieve()
                 .bodyToMono(Void.class)
-                .doOnSuccess(unused -> log.info("사용자 정보가 업데이트되었습니다: {}", userId))
+                .doOnSuccess(unused -> log.info("사용자 정보가 업데이트되었습니다: {}", username))
                 .doOnError(e -> log.error("사용자 수정 실패: {}", e.getMessage()));
     }
 
     // 사용자 삭제
-    public Mono<Void> deleteUser(String email) {
+    public Mono<Void> deleteUser(String username) {
 
-        return getUserIdByEmail(email)
-                .flatMap(userId -> webClient.delete()
-                        .uri("/users/{userId}", userId)
-                        .retrieve()
-                        .bodyToMono(Void.class)
-                )
-                .doOnSuccess(unused -> log.info("사용자 삭제 완료: " + email))
-                .doOnError(error -> log.error("사용자 삭제 실패: " + error.getMessage()));
+        return getUserInfoByUsername(username)
+                .flatMap(userRepresentation -> {
+                    if (userRepresentation.isPresent()) {
+                        String userId = userRepresentation.get().getId();
+
+                        return webClient.delete()
+                                .uri("/users/{userId}", userId)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .retrieve()
+                                .toBodilessEntity()
+                                .doOnSuccess(response -> log.info("Successfully deleted user: {}", userId))
+                                .doOnError(error -> log.error("Failed to delete user: {}", userId, error))
+                                .then();
+                    }
+                    else {
+                        log.warn("User not found: {}", username);
+                        return Mono.empty();
+                    }
+                });
     }
 
     // 권한 생성
-    public Mono<Void> createRole(Long id, String roleName, String description) {
+    public Mono<Void> createRole(String roleName, String description) {
+
+        log.info("roleRepresentation: {}", new RoleRepresentation(null, roleName, description));
 
         return webClient.post()
                 .uri("/roles")
-                .bodyValue(new RoleRepresentation(id.toString(), roleName, description))
+                .bodyValue(new RoleRepresentation(null, roleName, description))
                 .retrieve()
-                .bodyToMono(Void.class);
+                .bodyToMono(Void.class)
+                .doOnSuccess(unused -> log.info("역할 정보가 생성되었습니다: {}", roleName))
+                .doOnError(e -> log.error("역할 생성 실패: {}", e.getMessage()));
+    }
+
+    // Realm 내 등록된 모든 역할 목록 조회.
+    public Mono<List<RoleRepresentation>> getAllRolesByNames() {
+        return webClient.get()
+                .uri("/roles")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<RoleRepresentation>>() {});
     }
 
     // 권한 수정
-    public Mono<Void> updateRole(String roleName, Map<String, Object> updatedFields) {
-        if (updatedFields == null || updatedFields.isEmpty()) {
+    public Mono<Void> updateRole(String roleName, RoleRepresentation roleRepresentation) {
+        if (roleRepresentation == null || roleRepresentation.getName().isEmpty()) {
             return Mono.error(new IllegalArgumentException("수정할 필드가 제공되지 않았습니다."));
         }
 
         return webClient.put()
                 .uri("/roles/{roleName}", roleName)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(updatedFields)
+                .bodyValue(roleRepresentation)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .doOnSuccess(unused -> log.info("역할 정보가 업데이트되었습니다: {}", roleName))
@@ -110,145 +153,102 @@ public class KeycloakService {
                 .bodyToMono(Void.class);
     }
 
-    // 사용자 특정 권한(Role) 추가.
-    public Mono<Void> addRoleToUser(String userId, String roleName) {
-        return webClient.get()
-                .uri("/roles/{roleName}", roleName)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .flatMap(newRole -> webClient.get()
-                        .uri("/users/{userId}/role-mappings/realm", userId)
-                        .retrieve()
-                        .bodyToMono(List.class)
-                        .flatMap(currentRoles -> {
-                            // 현재 권한 목록에서 중복 체크
-                            boolean alreadyHasRole = ((List<Map<String, Object>>) currentRoles)
-                                    .stream()
-                                    .anyMatch(role -> role.get("id").equals(newRole.get("id")));
+    // 사용자 역할 수정.
+    public Mono<Void> updateUserRoles(String username, List<String> roleNames) {
+        return getUserInfoByUsername(username)
+                .flatMap(userRepresentation -> {
+                    if (userRepresentation.isPresent()) {
+                        String userId = userRepresentation.get().getId();
 
-                            if (alreadyHasRole) {
-                                return Mono.error(new IllegalArgumentException("사용자는 이미 해당 권한을 가지고 있습니다."));
-                            }
-
-                            // 기존 역할에 새로운 역할을 추가한 리스트
-                            List<Map<String, Object>> updatedRoles = new ArrayList<>(currentRoles);
-                            updatedRoles.add(Map.of(
-                                    "id", newRole.get("id"),
-                                    "name", newRole.get("name")
-                            ));
-
-                            // 업데이트된 역할을 Keycloak에 적용 (POST)
-                            return webClient.post()
-                                    .uri(uriBuilder -> uriBuilder
-                                            .path("/users/{userId}/role-mappings/realm")
-                                            .build(userId))
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .bodyValue(updatedRoles)
-                                    .retrieve()
-                                    .bodyToMono(Void.class);
-                        })
-                );
-    }
-
-    // 사용자 특정 권한(Role) 제거.
-    public Mono<Void> removeRoleFromUser(String userId, String roleName) {
-        return webClient.get()
-                .uri("/roles/{roleName}", roleName)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .flatMap(roleToRemove ->
-                        webClient.get()
-                                .uri("/users/{userId}/role-mappings/realm", userId)
-                                .retrieve()
-                                .bodyToMono(List.class)
-                                .flatMap(currentRoles -> {
-                                    // 현재 역할 목록에서 제거할 역할을 제외한 새로운 리스트 생성
-                                    List<Map<String, Object>> updatedRoles = ((List<Map<String, Object>>) currentRoles)
-                                            .stream()
-                                            .filter(role -> !role.get("id").equals(roleToRemove.get("id")))
+                        // 현재 사용자에게 할당된 역할 목록 조회.
+                        return getUserRoles(userId)
+                                .zipWith(getAllRolesByNames())
+                                .flatMap(tuple -> {
+                                    List<RoleRepresentation> currentRoles = tuple.getT1();
+                                    List<RoleRepresentation> newRoles = tuple.getT2().stream()
+                                            .filter(role -> roleNames.contains(role.getName()))
                                             .toList();
 
-                                    if (updatedRoles.size() == currentRoles.size()) {
-                                        return Mono.error(new IllegalArgumentException("지정된 권한이 사용자에게 할당되어 있지 않습니다."));
-                                    }
+                                    // 제거 되어야 할 역할 목록.
+                                    List<RoleRepresentation> rolesToRemove = currentRoles.stream()
+                                            .filter(role ->
+                                                    newRoles.stream().noneMatch(newRole ->
+                                                            newRole.getId().equals(role.getId())))
+                                            .toList();
 
-                                    // 업데이트된 역할 목록을 POST 요청으로 Keycloak에 적용
-                                    return webClient.post()
-                                            .uri("/users/{userId}/role-mappings/realm", userId)
-                                            .contentType(MediaType.APPLICATION_JSON)
-                                            .bodyValue(updatedRoles)
-                                            .retrieve()
-                                            .bodyToMono(Void.class);
-                                })
-                );
-    }
+                                    // 할당 되어야 할 역할 목록.
+                                    List<RoleRepresentation> rolesToAdd = newRoles.stream()
+                                            .filter(newRole ->
+                                                    currentRoles.stream().noneMatch(existingRole ->
+                                                            existingRole.getId().equals(newRole.getId())))
+                                            .toList();
 
-    // 사용자 권한 수정.
-    public Mono<Void> updateUserRoles(String userId, List<String> roleNames) {
-        if (roleNames == null || roleNames.isEmpty()) {
-            return Mono.error(new IllegalArgumentException("권한 목록이 비어있습니다."));
-        }
+                                    log.info("Updating roles for user '{}': Removing {} | Adding {}",
+                                            username, rolesToRemove, rolesToAdd);
 
-        return Flux.fromIterable(roleNames)
-                .flatMap(roleName -> webClient.get()
-                        .uri("/roles/{roleName}", roleName)
-                        .retrieve()
-                        .bodyToMono(Map.class)
-                        .onErrorResume(e -> {
-                            log.error("권한 조회 실패: {}", roleName, e);
-                            return Mono.error(new IllegalArgumentException("권한을 찾을 수 없습니다: " + roleName));
-                        })
-                )
-                .collectList()
-                .flatMap(roleList -> {
-                    if (roleList.isEmpty()) {
-                        return Mono.error(new IllegalArgumentException("모든 역할이 유효하지 않습니다."));
+                                    return removeRolesFromUser(userId, rolesToRemove)
+                                            .then(addRolesToUserByUserId(userId, rolesToAdd));
+                                });
                     }
-
-                    // 사용자 역할 업데이트 요청 (기존 역할은 무시하고, 새로운 역할 목록 적용)
-                    return webClient.post()
-                            .uri("/users/{userId}/role-mappings/realm", userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(roleList)
-                            .retrieve()
-                            .bodyToMono(Void.class)
-                            .doOnSuccess(unused -> log.info("사용자의 역할이 업데이트 되었습니다. 사용자 ID: {}", userId))
-                            .doOnError(e -> log.error("사용자 역할 업데이트 실패. 사용자 ID: {}", userId, e));
-                })
-                .onErrorResume(e -> {
-                    log.error("사용자 역할 업데이트 중 오류 발생: {}", e.getMessage());
-                    return Mono.error(new RuntimeException("사용자 역할 업데이트 중 문제가 발생했습니다."));
+                    else {
+                        log.warn("User not found: {}", username);
+                        return Mono.empty();
+                    }
                 });
     }
 
-    // 사용자 email로, keycloak에 등록된 사용자의 uuid 조회.
-    public Mono<String> getUserIdByEmail(String email) {
-        return webClient.get()
+    // 사용자 특정 권한(역할) 제거.
+    private Mono<Void> removeRolesFromUser(String userId, List<RoleRepresentation> roles) {
+        return webClient.method(HttpMethod.DELETE)
                 .uri(uriBuilder -> uriBuilder
-                        .path("/users")
-                        .queryParam("email", email)
-                        .build())
+                        .path("/users/{userId}/role-mappings/realm")
+                        .build(userId))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .bodyValue(roles)
                 .retrieve()
-                .bodyToMono(Map[].class)
-                .flatMap(users -> {
-                    if (users.length > 0 && users[0].get("id") != null) {
-                        return Mono.just(users[0].get("id").toString());
-                    } else {
-                        return Mono.error(new IllegalArgumentException("이메일을 찾을 수 없습니다: " + email));
-                    }
-                });
+                .toBodilessEntity()
+                .doOnSuccess(response -> log.info("Successfully removed all roles from user: {}", userId))
+                .doOnError(error -> log.error("Failed to remove roles from user: {}", userId, error))
+                .then();
     }
+
+    // 사용자 권한(역할) 추가.
+    private Mono<Void> addRolesToUserByUserId(String userId, List<RoleRepresentation> roles) {
+
+        // 추가할 역할이 없으면 요청 생략
+        if (roles.isEmpty()) return Mono.empty();
+
+        return webClient.post()
+                .uri("/users/{userId}/role-mappings/realm", userId)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .bodyValue(roles)
+                .retrieve()
+                .toBodilessEntity()
+                .doOnSuccess(response -> log.info("Successfully assigned roles {} to user: {}", roles, userId))
+                .doOnError(error -> log.error("Failed to assign roles {} to user: {}", roles, userId, error))
+                .then();
+    }
+
+    // keycloak에 등록된 사용자 UUID로, 해당 사용자에게 할당된 역할 목록 조회.
+    public Mono<List<RoleRepresentation>> getUserRoles(String userId) {
+        return webClient.get()
+                .uri("/users/{userId}/role-mappings/realm", userId)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<RoleRepresentation>>() {});
+    }
+
 
     @Data
     public static class UserRepresentation {
 
-        private final String id;
-        private final String username;
-        private final String email;
-        private final boolean enabled = true;
-        private final List<Credentials> credentials;
+        private String id;
+        private String username;
+        private String email;
+        private boolean enabled = true;
+        private List<Credentials> credentials;
 
-        public UserRepresentation(String id, String username, String email, String password) {
+        public UserRepresentation(@Nullable String id, String username, String email, String password) {
             this.id = id;
             this.username = username;
             this.email = email;
@@ -269,11 +269,11 @@ public class KeycloakService {
 
     @Data
     public static class RoleRepresentation {
-        private final String id;
-        private final String name;
-        private final String description;
+        private String id;
+        private String name;
+        private String description;
 
-        public RoleRepresentation(String id, String name, String description) {
+        public RoleRepresentation(@Nullable String id, String name, String description) {
             this.id = id;
             this.name = name;
             this.description = description;
