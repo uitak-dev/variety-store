@@ -72,17 +72,6 @@ public class KeycloakTestController {
     }
 
     /**
-     * ✅ 사용자의 역할 조회
-     */
-    @GetMapping("/users/{username}/roles")
-    public Mono<ResponseEntity<List<KeycloakService.RoleRepresentation>>> getUserRoles(@PathVariable String username) {
-        return keycloakService.getUserInfoByUsername(username)
-                .flatMap(userInfo -> userInfo.map(user -> keycloakService.getUserRoles(user.getId()))
-                        .orElseGet(() -> Mono.just(List.of())))
-                .map(ResponseEntity::ok);
-    }
-
-    /**
      * ✅ 역할 생성
      */
     @PostMapping("/roles")

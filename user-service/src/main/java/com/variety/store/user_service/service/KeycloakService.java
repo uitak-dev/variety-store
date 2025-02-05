@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 @Service
 public class KeycloakService {
 
+    private static final String DEFAULT_ROLE_PREFIX = "default-roles-";
+
     private final WebClient webClient;
 
     public KeycloakService(@Qualifier("keycloakWebClient") WebClient webClient) {
@@ -171,6 +173,7 @@ public class KeycloakService {
 
                                     // 제거 되어야 할 역할 목록.
                                     List<RoleRepresentation> rolesToRemove = currentRoles.stream()
+                                            .filter(role -> !role.getName().startsWith(DEFAULT_ROLE_PREFIX)) // 기본 역할 제외
                                             .filter(role ->
                                                     newRoles.stream().noneMatch(newRole ->
                                                             newRole.getId().equals(role.getId())))
@@ -199,6 +202,7 @@ public class KeycloakService {
 
     // 사용자 특정 권한(역할) 제거.
     private Mono<Void> removeRolesFromUser(String userId, List<RoleRepresentation> roles) {
+
         return webClient.method(HttpMethod.DELETE)
                 .uri(uriBuilder -> uriBuilder
                         .path("/users/{userId}/role-mappings/realm")
@@ -230,7 +234,7 @@ public class KeycloakService {
     }
 
     // keycloak에 등록된 사용자 UUID로, 해당 사용자에게 할당된 역할 목록 조회.
-    public Mono<List<RoleRepresentation>> getUserRoles(String userId) {
+    private Mono<List<RoleRepresentation>> getUserRoles(String userId) {
         return webClient.get()
                 .uri("/users/{userId}/role-mappings/realm", userId)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

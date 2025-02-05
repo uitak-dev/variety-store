@@ -1,13 +1,14 @@
 package com.variety.store.user_service.domain.entity;
 
+import com.variety.store.user_service.domain.entity.base.Tracking;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Getter
-@EqualsAndHashCode(of = {"role", "resource"})
+@EqualsAndHashCode(of = {"role", "resource"}, callSuper = false)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ResourceRole {
+public class ResourceRole extends Tracking {
 
     @Id
     @GeneratedValue

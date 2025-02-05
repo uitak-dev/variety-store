@@ -83,7 +83,12 @@ class UserServiceTest {
         UserDto savedUser = userService.createUser(userDto);
 
         // 사용자 정보 수정
-        AddressDto updateAddressDto = new AddressDto("seoul", "아리수로", "123");
+        AddressDto updateAddressDto = AddressDto.builder()
+                .state("서울시")
+                .street("아리수로")
+                .zipCode("123")
+                .build();
+
         UserDto updateUserDto = UserDto.builder()
                 .id(savedUser.getId())
                 .firstName("약용")
@@ -99,10 +104,10 @@ class UserServiceTest {
                 .extracting(UserDto::getFirstName, UserDto::getLastName, UserDto::getPhoneNumber,
                         user -> user.getAddress().getCity(),
                         user -> user.getAddress().getStreet(),
-                        user -> user.getAddress().getZipcode())
+                        user -> user.getAddress().getZipCode())
                 .containsExactly(updateUserDto.getFirstName(), updatedUserDto.getLastName(), updateUserDto.getPhoneNumber(),
                         updateAddressDto.getCity(),
                         updateAddressDto.getStreet(),
-                        updateAddressDto.getZipcode());
+                        updateAddressDto.getZipCode());
     }
 }

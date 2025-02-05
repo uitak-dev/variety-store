@@ -8,3 +8,43 @@
 1738228937848|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists role_seq|     drop sequence if exists role_seq
 1738228937848|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists user_role_seq|     drop sequence if exists user_role_seq
 1738228937848|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists users_seq|     drop sequence if exists users_seq
+1738570072801|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists resource cascade |     drop table if exists resource cascade 
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists resource_role cascade |     drop table if exists resource_role cascade 
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists role cascade |     drop table if exists role cascade 
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists user_role cascade |     drop table if exists user_role cascade 
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists users cascade |     drop table if exists users cascade 
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists resource_role_seq|     drop sequence if exists resource_role_seq
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists resource_seq|     drop sequence if exists resource_seq
+1738570072803|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists role_seq|     drop sequence if exists role_seq
+1738570072804|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists user_role_seq|     drop sequence if exists user_role_seq
+1738570072804|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists users_seq|     drop sequence if exists users_seq
+1738653512082|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists resource cascade |     drop table if exists resource cascade 
+1738653512084|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists resource_role cascade |     drop table if exists resource_role cascade 
+1738653512084|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists role cascade |     drop table if exists role cascade 
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists user_role cascade |     drop table if exists user_role cascade 
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop table if exists users cascade |     drop table if exists users cascade 
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists resource_role_seq|     drop sequence if exists resource_role_seq
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists resource_seq|     drop sequence if exists resource_seq
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists role_seq|     drop sequence if exists role_seq
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists user_role_seq|     drop sequence if exists user_role_seq
+1738653512085|0|statement|connection 28|url jdbc:h2:mem:testdb|     drop sequence if exists users_seq|     drop sequence if exists users_seq
+1738674060841|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists resource cascade |     drop table if exists resource cascade 
+1738674060842|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists resource_role cascade |     drop table if exists resource_role cascade 
+1738674060842|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists role cascade |     drop table if exists role cascade 
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists user_role cascade |     drop table if exists user_role cascade 
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists users cascade |     drop table if exists users cascade 
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists resource_role_seq|     drop sequence if exists resource_role_seq
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists resource_seq|     drop sequence if exists resource_seq
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists role_seq|     drop sequence if exists role_seq
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists user_role_seq|     drop sequence if exists user_role_seq
+1738674060843|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists users_seq|     drop sequence if exists users_seq
+1738719695308|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists resource cascade |     drop table if exists resource cascade 
+1738719695309|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists resource_role cascade |     drop table if exists resource_role cascade 
+1738719695309|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists role cascade |     drop table if exists role cascade 
+1738719695309|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists user_role cascade |     drop table if exists user_role cascade 
+1738719695309|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop table if exists users cascade |     drop table if exists users cascade 
+1738719695309|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists resource_role_seq|     drop sequence if exists resource_role_seq
+1738719695310|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists resource_seq|     drop sequence if exists resource_seq
+1738719695310|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists role_seq|     drop sequence if exists role_seq
+1738719695310|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists user_role_seq|     drop sequence if exists user_role_seq
+1738719695310|0|statement|connection 29|url jdbc:h2:mem:testdb|     drop sequence if exists users_seq|     drop sequence if exists users_seq

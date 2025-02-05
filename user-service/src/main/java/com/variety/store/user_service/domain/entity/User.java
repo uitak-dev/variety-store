@@ -1,6 +1,6 @@
 package com.variety.store.user_service.domain.entity;
 
-import com.variety.store.user_service.domain.entity.base.TimeEntity;
+import com.variety.store.user_service.domain.entity.base.Time;
 import com.variety.store.user_service.domain.entity.value.Address;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -15,7 +15,7 @@ import java.util.Set;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "users")
-public class User extends TimeEntity {
+public class User extends Time {
 
     @Id
     @GeneratedValue

@@ -1,13 +1,17 @@
 package com.variety.store.user_service.domain.entity;
 
+import com.variety.store.user_service.domain.entity.base.Tracking;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@EqualsAndHashCode(of = {"user", "role"})
-public class UserRole {
+@EqualsAndHashCode(of = {"user", "role"}, callSuper = false)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserRole extends Tracking {
 
     @Id
     @GeneratedValue

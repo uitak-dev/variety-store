@@ -11,7 +11,7 @@ public class AddressMapper {
         return Address.builder()
                 .city(addressDto.getCity())
                 .street(addressDto.getStreet())
-                .zipcode(addressDto.getZipcode())
+                .zipCode(addressDto.getZipCode())
                 .build();
     }
 
@@ -21,7 +21,7 @@ public class AddressMapper {
         return AddressDto.builder()
                 .city(address.getCity())
                 .street(address.getStreet())
-                .zipcode(address.getZipcode())
+                .zipCode(address.getZipCode())
                 .build();
     }
 }
