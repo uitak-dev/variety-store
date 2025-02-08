@@ -1,6 +1,7 @@
 package com.variety.store.user_service.domain.dto.request;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.variety.store.user_service.domain.entity.QUser;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AddressDto {
+public class AddressRequest {
 
     private String state;
     private String city;
@@ -20,13 +21,4 @@ public class AddressDto {
     private String buildingNumber;
     private String apartment;
     private String zipCode;
-
-    public static AddressDto fromTuple(Tuple tuple) {
-        return AddressDto.builder()
-                .street(tuple.get(QUser.user.address.street))
-                .city(tuple.get(QUser.user.address.city))
-                .state(tuple.get(QUser.user.address.state))
-                .zipCode(tuple.get(QUser.user.address.zipCode))
-                .build();
-    }
 }

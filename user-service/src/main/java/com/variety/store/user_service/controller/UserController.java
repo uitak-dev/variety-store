@@ -1,7 +1,7 @@
 package com.variety.store.user_service.controller;
 
-import com.variety.store.user_service.domain.dto.request.RoleDto;
-import com.variety.store.user_service.domain.dto.request.UserDto;
+import com.variety.store.user_service.domain.dto.request.UserRequest;
+import com.variety.store.user_service.domain.dto.response.UserResponse;
 import com.variety.store.user_service.service.KeycloakService;
 import com.variety.store.user_service.service.ResourceService;
 import com.variety.store.user_service.service.RoleService;
@@ -31,7 +31,7 @@ public class UserController {
      * 사용자 정보 조회.
      */
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserDto> getUserInfo(Authentication authentication, @PathVariable Long userId) {
+    public ResponseEntity<UserResponse> getUserInfo(Authentication authentication, @PathVariable Long userId) {
         Jwt jwt = (Jwt) authentication.getPrincipal();
         String username = jwt.getClaim("preferred_username");
 
@@ -41,7 +41,7 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
 
-        UserDto result = userService.getUserBasicInfo(userId);
+        UserResponse result = userService.getUserBasicInfo(userId);
         return ResponseEntity.ok(result);
     }
 
@@ -51,16 +51,15 @@ public class UserController {
      * 2. Keycloak Admin REST API 를 호출하여, 인가 서버에 사용자 저장.
      */
     @PostMapping("/users")
-    public Mono<ResponseEntity<UserDto>> createUser(@RequestBody UserDto userDto) {
+    public Mono<ResponseEntity<UserResponse>> createUser(@RequestBody UserRequest userRequest) {
 
-        log.info("run createUser: {}", userDto);
+        log.info("run createUser: {}", userRequest);
 
-        return Mono.fromCallable(() -> userService.createUser(userDto))
-                .flatMap(savedUser -> keycloakService.createUser(userDto.getUsername(), userDto.getEmail(), userDto.getPassword())
+        return Mono.fromCallable(() -> userService.createUser(userRequest))
+                .flatMap(savedUser -> keycloakService.createUser(userRequest.getUsername(), userRequest.getEmail(), userRequest.getPassword())
                         .thenReturn(ResponseEntity.ok(savedUser))
                 )
                 .doOnError(e -> log.error("사용자 등록 실패: {}", e.getMessage()));
     }
-
 
 }

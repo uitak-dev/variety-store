@@ -1,27 +1,38 @@
 package com.variety.store.user_service.utility.mapper;
 
-import com.variety.store.user_service.domain.dto.request.AddressDto;
+import com.variety.store.user_service.domain.dto.request.AddressRequest;
+import com.variety.store.user_service.domain.dto.response.AddressResponse;
 import com.variety.store.user_service.domain.entity.value.Address;
 
 public class AddressMapper {
 
-    public static Address convertToEntity(AddressDto addressDto) {
-        if (addressDto == null) return null;
+    public static AddressResponse convertToResponse(Address address) {
 
-        return Address.builder()
-                .city(addressDto.getCity())
-                .street(addressDto.getStreet())
-                .zipCode(addressDto.getZipCode())
+        if (address == null) return null;
+
+        return AddressResponse.builder()
+                .state(address.getState())
+                .city(address.getCity())
+                .area(address.getArea())
+                .street(address.getStreet())
+                .buildingNumber(address.getBuildingNumber())
+                .apartment(address.getApartment())
+                .zipCode(address.getZipCode())
                 .build();
     }
 
-    public static AddressDto convertToDto(Address address) {
-        if (address == null) return null;
+    public static Address convertToEntity(AddressRequest addressRequest) {
 
-        return AddressDto.builder()
-                .city(address.getCity())
-                .street(address.getStreet())
-                .zipCode(address.getZipCode())
+        if (addressRequest == null) return null;
+
+        return Address.builder()
+                .state(addressRequest.getState())
+                .city(addressRequest.getCity())
+                .area(addressRequest.getArea())
+                .street(addressRequest.getStreet())
+                .buildingNumber(addressRequest.getBuildingNumber())
+                .apartment(addressRequest.getApartment())
+                .zipCode(addressRequest.getZipCode())
                 .build();
     }
 }

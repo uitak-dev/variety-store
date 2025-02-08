@@ -1,16 +1,14 @@
 package com.variety.store.user_service.controller;
 
-import com.variety.store.user_service.domain.dto.request.RoleDto;
+import com.variety.store.user_service.domain.dto.request.RoleRequest;
 import com.variety.store.user_service.service.KeycloakService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -109,9 +107,9 @@ public class KeycloakTestController {
     @PutMapping("/users/{username}/roles")
     public Mono<ResponseEntity<Void>> updateUserRoles(
             @PathVariable String username,
-            @RequestBody List<RoleDto> roles) {
+            @RequestBody List<RoleRequest> roles) {
 
-        List<String> roleNameList = roles.stream().map(RoleDto::getName).toList();
+        List<String> roleNameList = roles.stream().map(RoleRequest::getName).toList();
 
         return keycloakService.updateUserRoles(username, roleNameList)
                 .then(Mono.just(ResponseEntity.ok().build()));

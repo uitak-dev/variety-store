@@ -1,6 +1,7 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.request.ResourceDto;
+import com.variety.store.user_service.domain.dto.request.ResourceRequest;
+import com.variety.store.user_service.domain.dto.response.ResourceResponse;
 import com.variety.store.user_service.domain.entity.Resource;
 import com.variety.store.user_service.repository.ResourceRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +24,7 @@ class ResourceServiceTest {
     private ResourceService resourceService;
 
     private Resource resource;
-    private ResourceDto resourceDto;
+    private ResourceRequest resourceRequest;
 
     @BeforeEach
     void setUp() {
@@ -38,7 +39,7 @@ class ResourceServiceTest {
                 .priority(1L)
                 .build();
 
-        resourceDto = ResourceDto.builder()
+        resourceRequest = ResourceRequest.builder()
                 .name("Test Resource")
                 .pattern("/api/test/**")
                 .httpMethod("GET")
@@ -50,7 +51,7 @@ class ResourceServiceTest {
     @Test
     void testCreateResource() {
         when(resourceRepository.save(any(Resource.class))).thenReturn(resource);
-        ResourceDto savedResource = resourceService.createResource(resourceDto);
+        ResourceResponse savedResource = resourceService.createResource(resourceRequest);
 
         assertNotNull(savedResource);
         assertEquals("Test Resource", savedResource.getName());
@@ -62,7 +63,7 @@ class ResourceServiceTest {
     void testGetResourceById() {
         when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
 
-        ResourceDto foundResource = resourceService.getResourceById(1L);
+        ResourceResponse foundResource = resourceService.getResourceById(1L);
         assertEquals("Test Resource", foundResource.getName());
 
         verify(resourceRepository, times(1)).findById(1L);

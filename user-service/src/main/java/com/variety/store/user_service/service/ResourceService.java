@@ -1,19 +1,19 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.request.ResourceDto;
+import com.variety.store.user_service.domain.dto.request.ResourceRequest;
+import com.variety.store.user_service.domain.dto.response.ResourceResponse;
 import com.variety.store.user_service.domain.entity.Resource;
 import com.variety.store.user_service.domain.entity.ResourceRole;
 import com.variety.store.user_service.domain.entity.Role;
 import com.variety.store.user_service.repository.ResourceRepository;
 import com.variety.store.user_service.repository.RoleRepository;
-import com.variety.store.user_service.utility.mapper.RoleMapper;
+import com.variety.store.user_service.utility.mapper.ResourceMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,73 +29,55 @@ public class ResourceService {
     /**
      * 새로운 리소스 생성.
      */
-    public ResourceDto createResource(ResourceDto resourceDto) {
-        Resource resource = convertToEntity(resourceDto);
+    public ResourceResponse createResource(ResourceRequest resourceRequest) {
+        Resource resource = ResourceMapper.convertToEntity(resourceRequest);
         Resource savedResource = resourceRepository.save(resource);
-        return convertToDto(savedResource);
+
+        return ResourceMapper.convertToResponse(savedResource);
     }
 
     /**
      * 특정 리소스 조회.
      */
     @Transactional(readOnly = true)
-    public ResourceDto getResourceById(Long id) {
+    public ResourceResponse getResourceById(Long id) {
         Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
-        return convertToDto(resource);
+
+        return ResourceMapper.convertToResponse(resource);
     }
 
     /**
      * 모든 리소스 조회.
      */
     @Transactional(readOnly = true)
-    public Set<ResourceDto> getAllResource() {
+    public Set<ResourceResponse> getAllResource() {
         return resourceRepository.findAll().stream()
-                .map(this::convertToDto)
+                .map(ResourceMapper::convertToResponse)
                 .collect(Collectors.toSet());
     }
 
     /**
      * 기존 리소스 수정.
      */
-    public ResourceDto updateResource(Long resourceId, ResourceDto resourceDto) {
+    public ResourceResponse updateResource(Long resourceId, ResourceRequest resourceRequest) {
 
         Resource existingResource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + resourceId));
 
-        // 기본 필드 업데이트.
-        existingResource.updateInfo(
-                resourceDto.getName(),
-                resourceDto.getPattern(),
-                resourceDto.getHttpMethod(),
-                resourceDto.getDescription(),
-                resourceDto.getPriority()
+        Set<Role> updateRoles = new HashSet<>(roleRepository.findAllById(resourceRequest.getRoles()));
+
+        existingResource.update(
+                resourceRequest.getName(),
+                resourceRequest.getPattern(),
+                resourceRequest.getHttpMethod(),
+                resourceRequest.getDescription(),
+                resourceRequest.getPriority(),
+                updateRoles
         );
 
-        // 업데이트할 권한 목록.
-        Set<Role> updatedRoles = resourceDto.getRoles().stream()
-                .map(roleDto -> roleRepository.findById(roleDto.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleDto.getId()))
-                )
-                .collect(Collectors.toSet());
-
-        // 기존 resourceRoles 중에서 제거할 권한 필터링.
-        existingResource.getResourceRoles().removeIf(resourceRole ->
-                updatedRoles.stream().noneMatch(role -> role.getId().equals(resourceRole.getRole().getId()))
-        );
-
-        // 새로운 권한 추가.
-        updatedRoles.forEach(role -> {
-            boolean hasRole = existingResource.getResourceRoles().stream()
-                    .anyMatch(resourceRole -> resourceRole.getRole().getId().equals(role.getId()));
-
-            if (!hasRole) {
-                existingResource.addResourceRole(ResourceRole.createResourceRole(role));
-            }
-        });
-
-        resourceRepository.save(existingResource);
-        return convertToDto(existingResource);
+//        resourceRepository.save(existingResource);
+        return ResourceMapper.convertToResponse(existingResource);
     }
 
     /**
@@ -108,50 +90,5 @@ public class ResourceService {
         // 관련된 ResourceRole 은 Cascade 옵션을 통해 삭제.
         resourceRepository.delete(existingResource);
         log.info("Resource with ID {} deleted successfully.", resourceId);
-    }
-
-    public Resource convertToEntity(ResourceDto resourceDto) {
-
-        Set<ResourceRole> resourceRoles = Optional.ofNullable(resourceDto.getRoles())
-                .orElse(Collections.emptySet())
-                .stream()
-                .map(roleDto -> {
-                    Role role = roleRepository.findById(roleDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleDto.getId()));
-                    return ResourceRole.createResourceRole(role);
-                })
-                .collect(Collectors.toSet());
-
-        Resource resource = Resource.builder()
-                .name(resourceDto.getName())
-                .pattern(resourceDto.getPattern())
-                .httpMethod(resourceDto.getHttpMethod())
-                .description(resourceDto.getDescription())
-                .priority(resourceDto.getPriority())
-                .resourceRoles(resourceRoles)
-                .build();
-
-        // ResourceRole 객체에 리소스를 설정
-        resourceRoles.forEach(resourceRole -> resourceRole.setResource(resource));
-        return resource;
-    }
-
-    public ResourceDto convertToDto(Resource resource) {
-
-        return ResourceDto.builder()
-                .id(resource.getId())
-                .name(resource.getName())
-                .pattern(resource.getPattern())
-                .httpMethod(resource.getHttpMethod())
-                .description(resource.getDescription())
-                .priority(resource.getPriority())
-                .roles(Optional.ofNullable(resource.getResourceRoles())
-                        .orElse(Collections.emptySet())
-                        .stream()
-                        .map(resourceRole ->
-                                RoleMapper.convertToDto(resourceRole.getRole())
-                        )
-                        .collect(Collectors.toSet()))
-                .build();
     }
 }

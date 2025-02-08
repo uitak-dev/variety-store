@@ -1,6 +1,6 @@
 package com.variety.store.user_service.controller;
 
-import com.variety.store.user_service.domain.dto.request.RoleDto;
+import com.variety.store.user_service.domain.dto.request.RoleRequest;
 import com.variety.store.user_service.service.KeycloakService;
 import com.variety.store.user_service.service.ResourceService;
 import com.variety.store.user_service.service.RoleService;
@@ -30,11 +30,11 @@ public class RoleController {
      * 2. Keycloak Admin REST API 를 호출하여, 인가 서버에 권한(역할) 생성.
      */
     @PostMapping("/roles")
-    public Mono<ResponseEntity<RoleDto>> createRole(@RequestBody RoleDto roleDto) {
+    public Mono<ResponseEntity<RoleRequest>> createRole(@RequestBody RoleRequest roleRequest) {
 
-        log.info("run createRole(): {}", roleDto);
+        log.info("run createRole(): {}", roleRequest);
 
-        return Mono.fromCallable(() -> roleService.createRole(roleDto))
+        return Mono.fromCallable(() -> roleService.createRole(roleRequest))
                 .flatMap(savedRole -> keycloakService.createRole(savedRole.getName(), savedRole.getDescription())
                         .thenReturn(ResponseEntity.ok(savedRole))
                 )
@@ -44,24 +44,24 @@ public class RoleController {
     // 권한 목록 조회.
     // 페이징 및 검색 조건 추가 필요.
     @GetMapping("/roles")
-    public ResponseEntity<List<RoleDto>> getAllRoles() {
-        List<RoleDto> result = roleService.getAllRoles();
+    public ResponseEntity<List<RoleRequest>> getAllRoles() {
+        List<RoleRequest> result = roleService.getAllRoles();
         return ResponseEntity.ok(result);
     }
 
     // 권한 상세 조회.
     @GetMapping("/roles/{roleId}")
-    public ResponseEntity<RoleDto> getRoleInfo(@PathVariable Long roleId) {
+    public ResponseEntity<RoleRequest> getRoleInfo(@PathVariable Long roleId) {
 
-        RoleDto result = roleService.getRoleById(roleId);
+        RoleRequest result = roleService.getRoleById(roleId);
         return ResponseEntity.ok(result);
     }
 
     // 권한 수정.
     @PutMapping("/roles/{roleId}")
-    public ResponseEntity<RoleDto> updateRole(@PathVariable Long roleId, @RequestBody RoleDto roleDto) {
+    public ResponseEntity<RoleRequest> updateRole(@PathVariable Long roleId, @RequestBody RoleRequest roleRequest) {
 
-        RoleDto updatedRole = roleService.updateRole(roleId, roleDto);
+        RoleRequest updatedRole = roleService.updateRole(roleId, roleRequest);
         return ResponseEntity.ok(updatedRole);
     }
 

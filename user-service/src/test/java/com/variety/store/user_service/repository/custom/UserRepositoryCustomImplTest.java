@@ -1,6 +1,7 @@
 package com.variety.store.user_service.repository.custom;
 
-import com.variety.store.user_service.domain.dto.request.UserDto;
+import com.variety.store.user_service.domain.dto.request.UserRequest;
+import com.variety.store.user_service.domain.dto.response.UserResponse;
 import com.variety.store.user_service.domain.dto.search.UserSearch;
 import com.variety.store.user_service.domain.entity.Role;
 import com.variety.store.user_service.domain.entity.User;
@@ -88,7 +89,7 @@ class UserRepositoryCustomImplTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         // 쿼리 실행
-        Page<UserDto> result = userRepository.searchUserList(userSearch, pageable);
+        Page<UserResponse> result = userRepository.searchUserList(userSearch, pageable);
 
         // 검증
         assertThat(result).isNotEmpty();

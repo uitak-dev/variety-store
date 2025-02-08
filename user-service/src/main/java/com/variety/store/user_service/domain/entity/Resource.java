@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,36 +32,56 @@ public class Resource extends Tracking {
     private Long priority;
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ResourceRole> resourceRoles = new HashSet<>();
+    private Set<ResourceRole> resourceRoles;
 
     @Builder
-    public Resource(Long id, String name, String pattern, String httpMethod, String description, Long priority, Set<ResourceRole> resourceRoles) {
+    public Resource(Long id, String name, String pattern, String httpMethod, String description, Long priority) {
         this.id = id;
         this.name = name;
         this.pattern = pattern;
         this.httpMethod = httpMethod;
         this.description = description;
         this.priority = priority;
-        this.resourceRoles = resourceRoles;
+        this.resourceRoles = new HashSet<>();
     }
 
     // Association convenience method
-    public void addResourceRole(ResourceRole resourceRole) {
-        resourceRoles.add(resourceRole);
-        resourceRole.setResource(this);
+    public void addRole(Role role) {
+        resourceRoles.add(new ResourceRole(this, role));
     }
 
-    public Set<Role> getRoleSet() {
-        return resourceRoles.stream()
-                .map(ResourceRole::getRole)
-                .collect(Collectors.toSet());
-    }
+    public void update(String name, String pattern, String httpMethod, String description, Long priority, Set<Role> newRoles) {
 
-    public void updateInfo(String name, String pattern, String httpMethod, String description, Long priority) {
+        // 기본 정보 수정.
         this.name = name;
         this.pattern = pattern;
         this.httpMethod = httpMethod;
         this.description = description;
         this.priority = priority;
+
+        // 현재 UserRole에서 Role 목록 추출
+        Set<Role> existingRoles = resourceRoles.stream()
+                .map(ResourceRole::getRole)
+                .collect(Collectors.toSet());
+
+        // 삭제할 역할: 기존 역할 목록 중에서 인자로 받은 역할 목록에 없는 역할.
+        Set<Role> rolesToRemove = new HashSet<>(existingRoles);
+        rolesToRemove.removeAll(newRoles);
+
+        // 추가할 역할: 인자로 받은 역할 목록 중에서 기존 역할 목록에 없는 역할.
+        Set<Role> rolesToAdd = new HashSet<>(newRoles);
+        rolesToAdd.removeAll(existingRoles);
+
+        // 역할 삭제 (Iterator 사용)
+        Iterator<ResourceRole> iterator = resourceRoles.iterator();
+        while (iterator.hasNext()) {
+            ResourceRole resourceRole = iterator.next();
+            if (rolesToRemove.contains(resourceRole.getRole())) {
+                iterator.remove();
+            }
+        }
+
+        // 역할 추가
+        rolesToAdd.forEach(this::addRole);
     }
 }

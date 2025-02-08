@@ -1,6 +1,6 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.request.RoleDto;
+import com.variety.store.user_service.domain.dto.request.RoleRequest;
 import com.variety.store.user_service.domain.entity.Role;
 import com.variety.store.user_service.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ class RoleServiceTest {
     @Autowired
     private RoleRepository roleRepository;
 
-    private List<RoleDto> roleDtoList = new ArrayList<>();
+    private List<RoleRequest> roleRequestList = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -39,7 +39,7 @@ class RoleServiceTest {
         }
 
         for (int i = 0; i < roleNameList.length; i++) {
-            roleDtoList.add(RoleDto.builder()
+            roleRequestList.add(RoleRequest.builder()
                     .name(roleNameList[i])
                     .description(roleDescriptionList[i])
                     .build()
@@ -53,14 +53,14 @@ class RoleServiceTest {
     @Test
     void testCreateRole() {
 
-        RoleDto roleDto = roleDtoList.get(0);
-        RoleDto savedRole = roleService.createRole(roleDto);
+        RoleRequest roleRequest = roleRequestList.get(0);
+        RoleRequest savedRole = roleService.createRole(roleRequest);
 
         assertThat(savedRole).isNotNull();
         assertThat(savedRole.getId()).isNotNull();
         assertThat(savedRole)
-                .extracting(RoleDto::getName, RoleDto::getDescription)
-                .containsExactly(roleDto.getName(), roleDto.getDescription());
+                .extracting(RoleRequest::getName, RoleRequest::getDescription)
+                .containsExactly(roleRequest.getName(), roleRequest.getDescription());
 
         // 데이터베이스 확인
         Role foundRole = roleRepository.findById(savedRole.getId()).orElseThrow();
@@ -72,14 +72,14 @@ class RoleServiceTest {
      */
     @Test
     void testGetAllRoles() {
-        roleDtoList.forEach(roleDto -> roleService.createRole(roleDto));
-        List<RoleDto> roles = roleService.getAllRoles();
+        roleRequestList.forEach(roleDto -> roleService.createRole(roleDto));
+        List<RoleRequest> roles = roleService.getAllRoles();
 
         assertThat(roles).isNotEmpty();
         assertThat(roles).hasSize(3);
 
-        assertThat(roles.stream().map(RoleDto::getName).toList())
-                .contains(roleDtoList.get(0).getName(), roleDtoList.get(1).getName(), roleDtoList.get(2).getName());
+        assertThat(roles.stream().map(RoleRequest::getName).toList())
+                .contains(roleRequestList.get(0).getName(), roleRequestList.get(1).getName(), roleRequestList.get(2).getName());
     }
 
     /**
@@ -87,9 +87,9 @@ class RoleServiceTest {
      */
     @Test
     void testGetRoleByName() {
-        RoleDto roleDto = roleDtoList.get(0);
-        roleService.createRole(roleDto);
-        RoleDto foundRole = roleService.getRoleByName("ROLE_ADMIN");
+        RoleRequest roleRequest = roleRequestList.get(0);
+        roleService.createRole(roleRequest);
+        RoleRequest foundRole = roleService.getRoleByName("ROLE_ADMIN");
 
         assertThat(foundRole).isNotNull();
         assertThat(foundRole.getName()).isEqualTo("ROLE_ADMIN");
@@ -110,9 +110,9 @@ class RoleServiceTest {
      */
     @Test
     void testGetRoleById() {
-        RoleDto roleDto = roleDtoList.get(0);
-        RoleDto savedRole = roleService.createRole(roleDto);
-        RoleDto foundRole = roleService.getRoleById(savedRole.getId());
+        RoleRequest roleRequest = roleRequestList.get(0);
+        RoleRequest savedRole = roleService.createRole(roleRequest);
+        RoleRequest foundRole = roleService.getRoleById(savedRole.getId());
 
         assertThat(foundRole).isNotNull();
         assertThat(foundRole.getId()).isEqualTo(savedRole.getId());
@@ -123,16 +123,16 @@ class RoleServiceTest {
      */
     @Test
     void testUpdateRole() {
-        RoleDto roleDto = roleDtoList.get(0);
-        RoleDto savedRole = roleService.createRole(roleDto);
+        RoleRequest roleRequest = roleRequestList.get(0);
+        RoleRequest savedRole = roleService.createRole(roleRequest);
 
-        RoleDto updateRoleDto = RoleDto.builder()
+        RoleRequest updateRoleRequest = RoleRequest.builder()
                 .id(savedRole.getId())
                 .name("ROLE_UPDATE")
                 .description("updated role")
                 .build();
 
-        RoleDto updatedRole = roleService.updateRole(savedRole.getId(), updateRoleDto);
+        RoleRequest updatedRole = roleService.updateRole(savedRole.getId(), updateRoleRequest);
 
         assertThat(updatedRole).isNotNull();
         assertThat(updatedRole.getName()).isEqualTo("ROLE_UPDATE");
@@ -144,7 +144,7 @@ class RoleServiceTest {
      */
     @Test
     void testUpdateRoleNotFound() {
-        RoleDto updateDto = RoleDto.builder()
+        RoleRequest updateDto = RoleRequest.builder()
                 .id(99L)
                 .name("ROLE_USER")
                 .description("User role")
@@ -160,8 +160,8 @@ class RoleServiceTest {
      */
     @Test
     void testDeleteRole() {
-        RoleDto roleDto = roleDtoList.get(0);
-        RoleDto savedRole = roleService.createRole(roleDto);
+        RoleRequest roleRequest = roleRequestList.get(0);
+        RoleRequest savedRole = roleService.createRole(roleRequest);
         roleService.deleteRole(savedRole.getId());
 
         assertThat(roleRepository.existsById(savedRole.getId())).isFalse();

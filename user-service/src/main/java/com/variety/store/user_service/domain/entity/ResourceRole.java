@@ -23,15 +23,8 @@ public class ResourceRole extends Tracking {
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
-    private ResourceRole(Role role) {
-        this.role = role;
-    }
-
-    public void setResource(Resource resource) {
+    public ResourceRole(Resource resource, Role role) {
         this.resource = resource;
-    }
-
-    public static ResourceRole createResourceRole(Role role) {
-        return new ResourceRole(role);
+        this.role = role;
     }
 }

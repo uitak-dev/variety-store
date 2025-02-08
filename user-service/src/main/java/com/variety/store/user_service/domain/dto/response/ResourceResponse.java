@@ -1,5 +1,6 @@
-package com.variety.store.user_service.domain.dto.request;
+package com.variety.store.user_service.domain.dto.response;
 
+import com.variety.store.user_service.domain.dto.request.RoleRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ResourceDto {
+public class ResourceResponse {
 
     private Long id;
 
@@ -21,5 +22,5 @@ public class ResourceDto {
     private String description;
     private Long priority;
 
-    private Set<RoleDto> roles;
+    private Set<RoleResponse> roles;
 }

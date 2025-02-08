@@ -1,23 +1,26 @@
 package com.variety.store.user_service.utility.mapper;
 
-import com.variety.store.user_service.domain.dto.request.RoleDto;
+import com.variety.store.user_service.domain.dto.request.RoleRequest;
+import com.variety.store.user_service.domain.dto.response.RoleResponse;
 import com.variety.store.user_service.domain.entity.Role;
 
 public class RoleMapper {
 
-    public static Role convertToEntity(RoleDto roleDto) {
-        return Role.builder()
-                .id(roleDto.getId())
-                .name(roleDto.getName())
-                .description(roleDto.getDescription())
-                .build();
-    }
+    public static RoleResponse convertToResponse(Role role) {
 
-    public static RoleDto convertToDto(Role role) {
-        return RoleDto.builder()
+        return RoleResponse.builder()
                 .id(role.getId())
                 .name(role.getName())
                 .description(role.getDescription())
+                .build();
+    }
+
+    public static Role convertToEntity(RoleRequest roleRequest) {
+
+        return Role.builder()
+                .id(roleRequest.getId())
+                .name(roleRequest.getName())
+                .description(roleRequest.getDescription())
                 .build();
     }
 }

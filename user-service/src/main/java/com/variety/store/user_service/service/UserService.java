@@ -1,23 +1,24 @@
 package com.variety.store.user_service.service;
 
-import com.variety.store.user_service.domain.dto.request.RoleDto;
-import com.variety.store.user_service.domain.dto.request.UserDto;
+import com.variety.store.user_service.domain.dto.request.RoleRequest;
+import com.variety.store.user_service.domain.dto.request.UserRequest;
+import com.variety.store.user_service.domain.dto.response.RoleResponse;
+import com.variety.store.user_service.domain.dto.response.UserResponse;
 import com.variety.store.user_service.domain.entity.Role;
 import com.variety.store.user_service.domain.entity.User;
 import com.variety.store.user_service.repository.RoleRepository;
 import com.variety.store.user_service.repository.UserRepository;
 import com.variety.store.user_service.utility.mapper.AddressMapper;
+import com.variety.store.user_service.utility.mapper.RoleMapper;
+import com.variety.store.user_service.utility.mapper.UserMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.ReactiveTransactionManager;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,16 +37,16 @@ public class UserService {
     /**
      * 사용자 생성(회원 가입).
      */
-    public UserDto createUser(UserDto userDto) {
+    public UserResponse createUser(UserRequest userRequest) {
 
-        if (userRepository.existsByEmail(userDto.getEmail())) {
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
         }
 
-        String encodedPassword = passwordEncoder.encode(userDto.getPassword());
-        userDto.setPassword(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(userRequest.getPassword());
+        userRequest.setPassword(encodedPassword);
 
-        User user = convertToEntity(userDto);
+        User user = UserMapper.convertToEntity(userRequest);
 
         Role defaultRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> {
@@ -61,45 +62,43 @@ public class UserService {
 
         log.info("사용자 DB 저장 완료: {}", user.getEmail());
 
-        return convertToDto(user);
+        return UserMapper.convertToResponse(user);
     }
 
     /**
      * 특정 사용자 기본 정보 조회.
      */
-    public UserDto getUserBasicInfo(Long userId) {
+    public UserResponse getUserBasicInfo(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
-        return convertToDto(user);
+        return UserMapper.convertToResponse(user);
     }
 
     /**
      * 특정 사용자 권한 조회.
      */
-    public Set<RoleDto> getUserRoles(Long userId) {
+    public Set<RoleResponse> getUserRoles(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 
-        return user.getUserRoles().stream()
-                .map(userRole -> new RoleDto(userRole.getRole().getId(), userRole.getRole().getName(), userRole.getRole().getDescription()))
+        return user.getRoles().stream()
+                .map(RoleMapper::convertToResponse)
                 .collect(Collectors.toSet());
     }
 
     /**
      * 사용자 기본 정보 수정.
      */
-    public UserDto updateUser(Long userId, UserDto userDto) {
+    public UserResponse updateUserInfo(Long userId, UserRequest userRequest) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
-        User updateUser = convertToEntity(userDto);
+        user.updateInfo(userRequest.getFirstName(), userRequest.getLastName(),
+                userRequest.getPhoneNumber(), AddressMapper.convertToEntity(userRequest.getAddress()));
 
-        user.updateInfo(updateUser.getFirstName(), updateUser.getLastName(),
-                updateUser.getPhoneNumber(), updateUser.getAddress());
-
-        userRepository.save(user);
-        return convertToDto(user);
+//        userRepository.save(user);
+        return UserMapper.convertToResponse(user);
     }
 
     /**
@@ -107,61 +106,23 @@ public class UserService {
      */
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
-        userRepository.save(user.delete());
+        user.delete();
+//        userRepository.save(user);
     }
 
     /**
-     * 사용자 권한 추가.
+     * 사용자 권한 수정.
      */
-    public void addRoleToUser(Long userId, Long roleId) {
+    public void updateRoleToUser(Long userId, Set<Long> roleIdSet) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found with id: " + roleId));
+        Set<Role> updateRoles = new HashSet<>(roleRepository.findAllById(roleIdSet));
 
-        user.addRole(role);
-        userRepository.save(user);
+        user.updateRoles(updateRoles);
+//        userRepository.save(user);
     }
 
-    /**
-     * 사용자 권한 제거.
-     */
-    public void removeRoleFromUser(Long userId, Long roleId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-
-        user.getUserRoles().removeIf(userRole -> userRole.getRole().getId().equals(roleId));
-
-        userRepository.save(user);
-    }
-
-    public UserDto convertToDto(User user) {
-
-        return UserDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phoneNumber(user.getPhoneNumber())
-                .address(AddressMapper.convertToDto(user.getAddress()))
-                .build();
-    }
-
-    public User convertToEntity(UserDto userDto) {
-
-        return User.builder()
-                .id(userDto.getId())
-                .username(userDto.getUsername())
-                .firstName(userDto.getFirstName())
-                .lastName(userDto.getLastName())
-                .email(userDto.getEmail())
-                .password(userDto.getPassword())
-                .phoneNumber(userDto.getPhoneNumber())
-                .address(AddressMapper.convertToEntity(userDto.getAddress()))
-                .build();
-    }
 }
